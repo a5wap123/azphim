@@ -4,7 +4,6 @@ import "../../node_modules/video-react/dist/video-react.css";
 import { Player } from 'video-react';
 const io = require('socket.io-client')
 import Task from './Task.jsx';
-import App1 from './App1.jsx';
 
 // App component - represents the whole app
 

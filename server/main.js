@@ -1,5 +1,6 @@
 import { Meteor } from 'meteor/meteor';
 import http from 'http';
+import {findObjectByKey,getRandomIntInclusive} from '../ultis/ulti'
 // import socket_io from 'socket.io';
 const PORT = 5547;
 var socketsMobile = []
@@ -31,19 +32,32 @@ Meteor.startup(() => {
     socket.on('sendLink', (ob) => {
       io.emit('sendLink', ob)
     })
-    socket.on('isMobile', (isMobile) => {
+    socket.on('isMobile', (deviceId) => {
       console.log('socket is mobile id: ' + socket.id)
-      let index = socketsMobile.indexOf(socket.id)
-      if (index === -1) {
-        socket.isMobile = isMobile
-        socketsMobile.push(socket.id)
-        console.log('socket is mobile: ' + socket.isMobile)
-        console.log('sockets mobile count: ' + socketsMobile.length)
+      let obMobile = findObjectByKey(socketsMobile,'deviceId',deviceId)
+      console.log(obMobile)
+      if (obMobile != undefined) {
+        let index = socketsMobile.indexOf(obMobile)
+        socketsMobile.splice(index, 1)
       }
-
+      socket.isMobile = true
+      let socketOb = {
+        deviceId: deviceId,
+        socketId: socket.id
+      }
+      socketsMobile.push(socketOb)
+      console.log('socket is mobile: ' + socket.isMobile)
+      console.log('sockets mobile count: ' + socketsMobile.length)
     })
     socket.on('webcalllink', (mgs) => {
-      io.to(socketsMobile[0]).emit('webcalllink', mgs)
+      if(socketsMobile.length != 0){
+        let index = getRandomIntInclusive(0,socketsMobile.length - 1)
+        console.log(index)
+        io.to(socketsMobile[index].socketId).emit('webcalllink', mgs)
+      }
+      else{
+        alert('Khoong co device')
+      }
     })
   });
 
