@@ -15,9 +15,12 @@ import { findObjectByKey } from '../../ultis/ulti'
 
 
 getString = async (url) => {
+    console.log('getString: '+url)
     return new Promise(function (resolve, reject) {
         try {
             fetchUrl(url, (error, meta, body) => {
+                if(error) console.log(error)
+                console.log('body success')
                 resolve(body.toString())
             })
         } catch (error) {
@@ -99,7 +102,7 @@ getTabMovies = (body) => {
 
 ex.getDetalFilm = async (url) => {
     url = baseUri + url
-    const body = await getString(url)
+    let body = await getString(url)
     let $ = cio.load(body)
     let detail = {}
     var divContain = $('div.movie-info')
@@ -110,20 +113,21 @@ ex.getDetalFilm = async (url) => {
     detail.nameEN = divContain.find('h1.movie-title > span.title-2').text()
     detail.imgCover = divContain.find('div.movie-l-img > img').attr('src')
     detail.contentFilm = divContain.find('div#film-content').html()
+    detail.imdb = divContain.find('dd.imdb').text()
 
     let director = {}
     let aDiretor = divContain.find('a.director')
     let name = aDiretor.text()
     if (name != '') {
-        director.Url = aDiretor.attr('href')
-        director.Name = name
-        director.tag = getIdOnString(director.Url)
+        director.url = aDiretor.attr('href')
+        director.name = name
+        director.tag = getIdOnString(director.url)
     }
 
     let country = {}
-    country.Url = divContain.find('dd.dd-country > a.country').attr('href')
-    country.Name = divContain.find('dd.dd-country > a.country').text()
-    let arrSplit = country.Url.split('/')
+    country.url = divContain.find('dd.dd-country > a.country').attr('href')
+    country.name = divContain.find('dd.dd-country > a.country').text()
+    let arrSplit = country.url.split('/')
     country.tag = arrSplit[arrSplit.length - 2]
     detail.director = director
     detail.country = country
@@ -140,16 +144,22 @@ ex.getDetalFilm = async (url) => {
     detail.cats = cats
 
     let urlXemPhim = divContain.find('a#btn-film-watch').attr('href')
-    detail.servers = await getEpisode(urlXemPhim)
+    let urlXP = baseUri + urlXemPhim
+    body = await getString(urlXP)
+    detail.previewThumb = getPreviewUrl(body)
+    detail.servers = await getEpisode(body,urlXemPhim)
+
     return detail
 
 }
-getEpisode = async (url) => {
-    url = baseUri + url
-    const body = await getString(url)
+getEpisode = async (body,urlXemPhim) => {
+   
     let $ = cio.load(body)
     let servers = []
-    let lstServer = $('div.list-server').find('div.server')
+    let lstServer = $('ul.server-list > li.backup-server')
+    if(lstServer.length === 0){
+        lstServer = $('div.list-server').find('div.server')
+    }
     for (var i = 0; i < lstServer.length; i++) {
         var element = lstServer.eq(i);
         let server = {}
@@ -166,12 +176,22 @@ getEpisode = async (url) => {
         server.episodes = lstEpisode
         servers.push(server)
     }
-
-
-
+    if(!servers.length > 0){
+        let server = {}
+        server.name = 'Server film'
+        var lstEpisode = []
+        let p = {}
+        let responseJson = await getLinkPlay(urlXemPhim)
+        p.title = 'Xem full'
+        p.url = urlXemPhim
+        p.episodeid = responseJson.requestId
+        lstEpisode.push(p)
+        server.episodes = lstEpisode
+        servers.push(server)
+    }
     return servers
 }
-ex.getLinkPlay = async (url) => {
+getLinkPlay  = async (url) => {
     url = baseUri + url
     let body = await getString(url)
     let $ = cio.load(body)
@@ -193,7 +213,6 @@ ex.getListMovies = async (key, page, text) => {
     else
         url = `${url}page-${page}.html`
     url = baseUri + url
-    console.log(url)
     let body = await getString(url)
     let $ = cio.load(body)
     let lis = $('ul.list-movie').find('li')
@@ -211,6 +230,7 @@ ex.getListMovies = async (key, page, text) => {
         p.url = el.find('a').attr('href')
         lst.push(p)
     }
+
     return lst
 }
 
@@ -224,9 +244,7 @@ getPreviewUrl = (body) => {
         urlImg = previewUrl[0].replace(/previewUrl='/gim, '')
         urlImg = urlImg.replace(/'/gim, '')
     }
-
-    console.log(urlImg)
-
+    return urlImg
 }
 
 getIdOnString = (str) => {

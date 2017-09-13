@@ -7,8 +7,13 @@
   "dependencies": {
     "babel-runtime": "^6.20.0",
     "bufferutil": "^3.0.2",
+    "cheerio": "^1.0.0-rc.2",
+    "fetch": "^1.1.0",
     "meteor-node-stubs": "~0.2.4",
+    "node-fetch": "^1.7.3",
     "react": "^15.6.1",
+    "react-addons-pure-render-mixin": "^15.6.0",
+    "react-bootstrap": "^0.31.3",
     "react-dom": "^15.6.1",
     "redux": "^3.7.2",
     "utf-8-validate": "^3.0.3",

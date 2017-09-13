@@ -8,7 +8,9 @@ export default class Task extends Component {
     
   render() {
     return (
+      <div>
       <p> Connected: {this.props.isConnected}</p>
+      </div>
     );
   }
 }
