@@ -15,16 +15,24 @@ import { findObjectByKey } from '../../ultis/ulti'
 
 
 getString = async (url) => {
-    console.log('getString: '+url)
+    console.log('getString: ' + url)
+    if (url === 'http://www.phimmoi.net/undefined') return null
     return new Promise(function (resolve, reject) {
         try {
             fetchUrl(url, (error, meta, body) => {
-                if(error) console.log(error)
+                if (error) console.log(error)
                 console.log('body success')
-                resolve(body.toString())
+                if (body === undefined) return null
+                let bodyResponse = body.toString()
+                let wait = setTimeout(() => {
+                    clearTimeout(wait);
+                    console.log('return body success')
+                    resolve(bodyResponse)
+                }, 5000)
             })
         } catch (error) {
-            reject(error);
+            console.log(error)
+            return null
         }
     });
 }
@@ -103,6 +111,7 @@ getTabMovies = (body) => {
 ex.getDetalFilm = async (url) => {
     url = baseUri + url
     let body = await getString(url)
+    if (body === null) return null
     let $ = cio.load(body)
     let detail = {}
     var divContain = $('div.movie-info')
@@ -131,7 +140,7 @@ ex.getDetalFilm = async (url) => {
     country.tag = arrSplit[arrSplit.length - 2]
     detail.director = director
     detail.country = country
-    
+
     let lstcat = divContain.find('dd.dd-cat a.category')
     let cats = []
     for (var i = 0; i < lstcat.length; i++) {
@@ -146,18 +155,24 @@ ex.getDetalFilm = async (url) => {
     let urlXemPhim = divContain.find('a#btn-film-watch').attr('href')
     let urlXP = baseUri + urlXemPhim
     body = await getString(urlXP)
-    detail.previewThumb = getPreviewUrl(body)
-    detail.servers = await getEpisode(body,urlXemPhim)
+    if (body != null) {
+        detail.previewThumb = getPreviewUrl(body)
+        detail.servers = await getEpisode(body, urlXemPhim)
+    }
+    else {
+        detail.previewThumb = ''
+        detail.servers = []
+    }
 
     return detail
 
 }
-getEpisode = async (body,urlXemPhim) => {
-   
+getEpisode = async (body, urlXemPhim) => {
+
     let $ = cio.load(body)
     let servers = []
     let lstServer = $('ul.server-list > li.backup-server')
-    if(lstServer.length === 0){
+    if (lstServer.length === 0) {
         lstServer = $('div.list-server').find('div.server')
     }
     for (var i = 0; i < lstServer.length; i++) {
@@ -176,7 +191,7 @@ getEpisode = async (body,urlXemPhim) => {
         server.episodes = lstEpisode
         servers.push(server)
     }
-    if(!servers.length > 0){
+    if (!servers.length > 0) {
         let server = {}
         server.name = 'Server film'
         var lstEpisode = []
@@ -191,7 +206,7 @@ getEpisode = async (body,urlXemPhim) => {
     }
     return servers
 }
-getLinkPlay  = async (url) => {
+getLinkPlay = async (url) => {
     url = baseUri + url
     let body = await getString(url)
     let $ = cio.load(body)

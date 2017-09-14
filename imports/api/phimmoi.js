@@ -2,17 +2,33 @@ import { Meteor } from 'meteor/meteor'
 import { Mongo } from 'meteor/mongo'
 import { check } from 'meteor/check'
 export const Films = new Mongo.Collection('film')
-const Director = new Mongo.Collection('director')
-const Country = new Mongo.Collection('country')
-const Category = new Mongo.Collection('category')
-const Episodes = new Mongo.Collection('episodes')
-const Servers = new Mongo.Collection('servers')
+export const Director = new Mongo.Collection('director')
+export const Country = new Mongo.Collection('country')
+export const Category = new Mongo.Collection('category')
+export const Episodes = new Mongo.Collection('episodes')
+export const Servers = new Mongo.Collection('servers')
+export const Historys = new Mongo.Collection('history')
 
 
 if (Meteor.isServer) {
     // This code only runs on the server
     Meteor.publish('films', function FilmsPublication() {
         return Films.find();
+    });
+    Meteor.publish('directors', function FilmsPublication() {
+        return Director.find();
+    });
+    Meteor.publish('countrys', function FilmsPublication() {
+        return Country.find();
+    });
+    Meteor.publish('categorys', function FilmsPublication() {
+        return Category.find();
+    });
+    Meteor.publish('episodes', function FilmsPublication() {
+        return Episodes.find();
+    });
+    Meteor.publish('servers', function FilmsPublication() {
+        return Servers.find();
     });
 }
 Meteor.methods({
@@ -30,7 +46,8 @@ Meteor.methods({
                 'nameVN':detail.nameVN, 'nameEN':detail.nameEN, 
                 'imgCover':detail.imgCover, 'contentFilm':detail.contentFilm,
                 'tagDirector':detail.director.tag,'tagCountry':detail.country.tag,
-                'previewThumb':detail.previewThumb,'cats':cats
+                'previewThumb':detail.previewThumb,'cats':cats,
+                'createTime':new Date(),'dateTime':new Date()
             });
         }
         else{
@@ -78,6 +95,9 @@ Meteor.methods({
                 }
             }    
         }
+    },
+    'history.insert'(url){
+
     }
 
 });

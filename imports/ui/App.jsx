@@ -6,7 +6,7 @@ import "../../node_modules/video-react/dist/video-react.css";
 import { Button, Grid, Row, Col, Panel, FormControl } from 'react-bootstrap';
 import { Player } from 'video-react';
 const io = require('socket.io-client')
-import { Films } from '../api/phimmoi'
+import { Films,Director,Category,Country,Servers,Episodes } from '../api/phimmoi'
 // App component - represents the whole app
 
 const SocketEndpoint = 'http://192.168.8.155:5547';
@@ -15,7 +15,6 @@ const socket = io(SocketEndpoint, {
 });
 class App extends Component {
     state = {
-        isConnected: 'false',
         medias: '',
         src: 'https://media.w3.org/2010/05/sintel/trailer_hd.mp4',
         text: '',
@@ -31,43 +30,37 @@ class App extends Component {
         console.log('componentWillMount')
 
         socket.on('connect', () => {
-            this.setState({ isConnected: 'true' })
+            
         })
         socket.on('disconnect', () => {
-            this.setState({ isConnected: 'false' })
+            
         })
+        //server send obj medias lại sau khi get từ mobile
         socket.on('sendLink', (ob) => {
             let i = ob.length - 1
             console.log(ob[i])
 
             this.setState({ src: ob[i].url })
         })
-        socket.on('sendIO', (ob) => {
-            console.log(ob)
-        })
+        //server sau khi get total thì gửi về
         socket.on('server-send-total',(total,pageIndex)=>{
-            this.setState({total})
+            this.setState({total,pageIndex})
         })
     }
     componentDidMount = () => {
         console.log('componentDidMount')
-        console.log(this.refs.row.getAttribute('class'));
     }
     handleSubmit(evt) {
         evt.preventDefault()
-        //let link = ReactDOM.findDOMNode(this.refs.urlXemPhim).value.trim()
-        let link = this.state.text
+        let link = ReactDOM.findDOMNode(this.refs.urlFilm).value.trim()
         socket.emit('getLink', link)
-        this.setState({ text: '' })
-    }
-    handleChange(e) {
-        this.setState({ text: e.target.value })
     }
     getFilmBo(e){
         e.preventDefault()
         let key  = ReactDOM.findDOMNode(this.refs.key).value.trim()
         let pageIndex  = ReactDOM.findDOMNode(this.refs.pageIndex).value.trim()
-        socket.emit('gettotalfilm',key,pageIndex)
+        let urlLaster  = ReactDOM.findDOMNode(this.refs.urlLaster).value.trim()
+        socket.emit('gettotalfilm',key,pageIndex,urlLaster)
     }
 
     render() {
@@ -80,16 +73,22 @@ class App extends Component {
                     <Panel header="Getfilm" bsStyle="primary">
                         <Grid>
                             <Row className="show-grid" ref='row'>
-                                <Col xs={12} md={8}>
+                                <Col xs={6} md={8}>
                                 <p>Số film: {this.props.films.length}</p>
-                                    <FormControl type='text' value={this.state.text} onChange={this.handleChange.bind(this)} placeholder="Link xem phim" />
+                                <p>Số directors: {this.props.directors.length}</p>
+                                <p>Số countrys: {this.props.countrys.length}</p>
+                                <p>Số categorys: {this.props.categorys.length}</p>
+                                <p>Số servers: {this.props.servers.length}</p>
+                                <p>Số episodes: {this.props.episodes.length}</p>
+                                    <FormControl type='text' ref="urlFilm" placeholder="Link xem phim" />
                                     <Button bsStyle='primary' onClick={this.handleSubmit.bind(this)} >Get film</Button>
                                 </Col>
-                                <Col xs={6} md={4}>
+                                <Col xs={6} md={8}>
                                 <p>Số film: {this.state.total}</p>
                                 <p>page: {this.state.pageIndex}</p>
                                 <FormControl type='text' ref='key'  placeholder="key" />
                                 <FormControl type='text' ref='pageIndex' placeholder="Page index" />
+                                <FormControl type='text' ref='urlLaster' placeholder="Url laster" />
                                 <Button bsStyle='primary' onClick={this.getFilmBo.bind(this)} >Get total film bộ</Button>
                                 </Col>
                             </Row>
@@ -114,11 +113,27 @@ class App extends Component {
     }
 }
 App.propTypes = {
-    films: PropTypes.array.isRequired
+    films: PropTypes.array.isRequired,
+    directors: PropTypes.array.isRequired,
+    countrys: PropTypes.array.isRequired,
+    categorys: PropTypes.array.isRequired,
+    episodes: PropTypes.array.isRequired,
+    servers: PropTypes.array.isRequired,
+
 };
 export default createContainer(() => {
-    Meteor.subscribe('films');
+    Meteor.subscribe('films')
+    Meteor.subscribe('directors')
+    Meteor.subscribe('countrys')
+    Meteor.subscribe('categorys')
+    Meteor.subscribe('episodes')
+    Meteor.subscribe('servers')
     return {
         films: Films.find({}).fetch(),
+        directors: Director.find({}).fetch(),
+        countrys: Country.find({}).fetch(),
+        categorys: Category.find({}).fetch(),
+        episodes: Episodes.find({}).fetch(),
+        servers: Servers.find({}).fetch(),
     };
 }, App);
