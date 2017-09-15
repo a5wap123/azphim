@@ -16,18 +16,16 @@ import { findObjectByKey } from '../../ultis/ulti'
 
 getString = async (url) => {
     console.log('getString: ' + url)
-    if (url === 'http://www.phimmoi.net/undefined') return null
     return new Promise(function (resolve, reject) {
         try {
             fetchUrl(url, (error, meta, body) => {
-                if (error) console.log(error)
+                if (error) {
+                    return null
+                }
                 console.log('body success')
-                if (body === undefined) return null
-                let bodyResponse = body.toString()
                 let wait = setTimeout(() => {
                     clearTimeout(wait);
-                    console.log('return body success')
-                    resolve(bodyResponse)
+                    resolve(body.toString())
                 }, 5000)
             })
         } catch (error) {
@@ -109,9 +107,10 @@ getTabMovies = (body) => {
 }
 
 ex.getDetalFilm = async (url) => {
+    if (url === 'undefined') return null
     url = baseUri + url
     let body = await getString(url)
-    if (body === null) return null
+
     let $ = cio.load(body)
     let detail = {}
     var divContain = $('div.movie-info')
@@ -153,9 +152,9 @@ ex.getDetalFilm = async (url) => {
     detail.cats = cats
 
     let urlXemPhim = divContain.find('a#btn-film-watch').attr('href')
-    let urlXP = baseUri + urlXemPhim
-    body = await getString(urlXP)
-    if (body != null) {
+    if (urlXemPhim != undefined) {
+        let urlXP = baseUri + urlXemPhim
+        body = await getString(urlXP)
         detail.previewThumb = getPreviewUrl(body)
         detail.servers = await getEpisode(body, urlXemPhim)
     }
@@ -196,15 +195,33 @@ getEpisode = async (body, urlXemPhim) => {
         server.name = 'Server film'
         var lstEpisode = []
         let p = {}
-        let responseJson = await getLinkPlay(urlXemPhim)
-        p.title = 'Xem full'
-        p.url = urlXemPhim
-        p.episodeid = responseJson.requestId
-        lstEpisode.push(p)
-        server.episodes = lstEpisode
-        servers.push(server)
+        let requestId = await getEpisodeId(body)
+        
+        if (requestId !== null) { 
+
+            p.title = 'Xem full'
+            p.url = urlXemPhim
+            p.episodeid = requestId
+            lstEpisode.push(p)
+            server.episodes = lstEpisode
+            servers.push(server)
+         }
+         else{
+             console.log('Looi: '+urlXemPhim)
+         }
     }
     return servers
+}
+getEpisodeId = async (body)=>{
+    let regex = /currentEpisode.requestId='\d+';/gim
+    let macth = regex.exec(body)
+    let requestId = null
+    if(macth !== undefined){
+        requestId = macth[0]
+        requestId = requestId.replace(/currentEpisode.requestId='/gim, '').replace(/';/gim,'')
+    }
+    return requestId
+
 }
 getLinkPlay = async (url) => {
     url = baseUri + url
@@ -216,7 +233,6 @@ getLinkPlay = async (url) => {
     let _responseJson = regex.exec(res)
 
     let responseJson = JSON.parse(_responseJson)
-    responseJson.previewThumb = getPreviewUrl(body)
     return responseJson
 }
 

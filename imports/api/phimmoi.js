@@ -9,7 +9,6 @@ export const Episodes = new Mongo.Collection('episodes')
 export const Servers = new Mongo.Collection('servers')
 export const Historys = new Mongo.Collection('history')
 
-
 if (Meteor.isServer) {
     // This code only runs on the server
     Meteor.publish('films', function FilmsPublication() {
